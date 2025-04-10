@@ -53,7 +53,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               />
             }
           >
-            <ProductActionsWrapper id={product.id} region={region} />
+            <ProductActionsWrapper
+              id={product.id}
+              region={region}
+              clickId={clickId ?? undefined}
+            />
           </Suspense>
         </div>
       </div>

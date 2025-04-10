@@ -14,7 +14,7 @@ import {
   setCartId,
 } from "./cookies"
 import { getRegion } from "./regions"
-import { postback } from "./postback"
+import { postbackLog, getPostbackLog, postbackLogUpdate } from "./postback"
 
 /**
  * Retrieves a cart by its ID. If no ID is provided, it will use the cart ID from the cookies.
@@ -101,6 +101,40 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
   return sdk.store.cart
     .update(cartId, data, {}, headers)
     .then(async ({ cart }) => {
+      if (!cart.items) {
+        console.log("Cart items is undefined")
+        return cart
+      }
+      // Get all line items that have been updated
+      for (const item of cart.items) {
+        try {
+          // Fetch existing postback log for this transaction
+          const postbackLogData = await getPostbackLog(item.id)
+
+          if (postbackLogData?.isSuccess && postbackLogData.value?.length > 0) {
+            const existingPostback = postbackLogData.value[0]
+            console.log("Updating postback for line item:", {
+              lineItemId: item.id,
+              clickId: existingPostback.clickId,
+            })
+
+            // Update the postback log with new data
+            await postbackLogUpdate(existingPostback.clickId, {
+              clickId: existingPostback.clickId,
+              amount: item.unit_price / 100,
+              itemName: item.title || item.variant?.title || "Unknown Item",
+              quantity: item.quantity,
+              transactionId: item.id,
+            })
+          }
+        } catch (error) {
+          console.error("Error updating postback for line item:", {
+            lineItemId: item.id,
+            error: error instanceof Error ? error.message : "Unknown error",
+          })
+        }
+      }
+
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
 
@@ -158,9 +192,11 @@ export async function addToCart({
     })
     .catch(medusaError)
   console.log("Result of adding to cart:", result)
-
+  console.log("clickId:", clickId)
   // Send postback if clickId is provided and line item was created successfully
   if (clickId && result?.cart?.items) {
+    console.log("Cart items:", result.cart.items)
+
     const newLineItem = result.cart.items.find(
       (item) => item.variant_id === variantId
     )
@@ -170,7 +206,7 @@ export async function addToCart({
         clickId: clickId,
       })
 
-      await postback({
+      await postbackLog({
         clickId,
         amount: newLineItem.unit_price / 100, // Converting from cents to actual currency
         itemName:
@@ -216,7 +252,46 @@ export async function updateLineItem({
 
   await sdk.store.cart
     .updateLineItem(cartId, lineId, { quantity }, {}, headers)
-    .then(async () => {
+    .then(async ({ cart }) => {
+      try {
+        const updatedItem = cart.items?.find((item) => item.id === lineId)
+        console.log("Updated item:", updatedItem)
+        if (!updatedItem) {
+          console.log("Updated line item not found in cart response", {
+            lineId,
+          })
+          return
+        }
+
+        // Fetch existing postback log for this transaction
+        const postbackLogData = await getPostbackLog(lineId)
+        console.log("Postback log data:", postbackLogData)
+
+        // Check if we have a successful response with data
+        if (postbackLogData?.isSuccess && postbackLogData.value?.length > 0) {
+          const existingPostback = postbackLogData.value[0]
+          console.log("Updating postback for line item:", {
+            lineItemId: lineId,
+            clickId: existingPostback.clickId,
+          })
+
+          // Update the postback log with new data
+          await postbackLogUpdate(existingPostback.clickId, {
+            clickId: existingPostback.clickId,
+            amount: updatedItem.unit_price / 100,
+            itemName:
+              updatedItem.title || updatedItem.variant?.title || "Unknown Item",
+            quantity: updatedItem.quantity,
+            transactionId: lineId,
+          })
+        }
+      } catch (error) {
+        console.error("Error updating postback for line item:", {
+          lineItemId: lineId,
+          error: error instanceof Error ? error.message : "Unknown error",
+        })
+      }
+
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
 
