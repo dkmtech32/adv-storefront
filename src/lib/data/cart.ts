@@ -14,7 +14,12 @@ import {
   setCartId,
 } from "./cookies"
 import { getRegion } from "./regions"
-import { postbackLog, getPostbackLog, postbackLogUpdate } from "./postback"
+import {
+  postbackLog,
+  getPostbackLog,
+  postbackLogUpdate,
+  postback,
+} from "./postback"
 
 /**
  * Retrieves a cart by its ID. If no ID is provided, it will use the cart ID from the cookies.
@@ -504,7 +509,7 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
  */
 export async function placeOrder(cartId?: string) {
   const id = cartId || (await getCartId())
-
+  console.log("cartId", id)
   if (!id) {
     throw new Error("No existing cart found when placing an order")
   }
@@ -512,6 +517,13 @@ export async function placeOrder(cartId?: string) {
   const headers = {
     ...(await getAuthHeaders()),
   }
+  const cartRetrieved = await retrieveCart(id)
+  if (!cartRetrieved?.items) {
+    throw new Error("No items found in cart when placing order")
+  }
+  const cartLineItemsMap = new Map(
+    cartRetrieved.items.map((item) => [item.variant_id, item.id])
+  )
 
   const cartRes = await sdk.store.cart
     .complete(id, {}, headers)
@@ -521,15 +533,76 @@ export async function placeOrder(cartId?: string) {
       return cartRes
     })
     .catch(medusaError)
-
   if (cartRes?.type === "order") {
     const countryCode =
       cartRes.order.shipping_address?.country_code?.toLowerCase()
 
+    // Handle postback updates for each line item
+    if (cartRes.order.items) {
+      for (const orderItem of cartRes.order.items) {
+        try {
+          // Get the original cart line item ID using the variant ID
+          const cartLineItemId = cartLineItemsMap.get(
+            orderItem.variant_id ?? ""
+          )
+          if (!cartLineItemId) {
+            console.error(
+              "Could not find matching cart line item for order item:",
+              orderItem
+            )
+            continue
+          }
+
+          // Get the postback data using the cart line item ID
+          const postbackLogData = await getPostbackLog(cartLineItemId)
+          if (postbackLogData?.isSuccess && postbackLogData.value?.length > 0) {
+            const existingPostback = postbackLogData.value[0]
+            console.log("Updating postback for order item:", {
+              cartLineItemId: cartLineItemId,
+              orderLineItemId: orderItem.id,
+              clickId: existingPostback.clickId,
+            })
+
+            // Update the postback log with the order line item ID
+            await postbackLogUpdate(existingPostback.clickId, {
+              clickId: existingPostback.clickId,
+              amount: orderItem.unit_price / 100,
+              itemName:
+                orderItem.title || orderItem.variant?.title || "Unknown Item",
+              quantity: orderItem.quantity,
+              transactionId: orderItem.id, // Using order line item ID
+            })
+
+            // Send final postback
+            console.log("Sending final postback for order item:", {
+              cartLineItemId: cartLineItemId,
+              orderLineItemId: orderItem.id,
+              clickId: existingPostback.clickId,
+            })
+            await postback({
+              clickId: existingPostback.clickId,
+              amount: orderItem.unit_price / 100,
+              itemName:
+                orderItem.title || orderItem.variant?.title || "Unknown Item",
+              quantity: orderItem.quantity,
+              transactionId: orderItem.id,
+              status: "Success",
+            })
+          }
+        } catch (error) {
+          console.error("Error updating postback for order item:", {
+            cartLineItemId: orderItem.id,
+            orderLineItemId: orderItem.id,
+            error: error instanceof Error ? error.message : "Unknown error",
+          })
+        }
+      }
+    }
+
     const orderCacheTag = await getCacheTag("orders")
     revalidateTag(orderCacheTag)
 
-    removeCartId()
+    // removeCartId()
     redirect(`/${countryCode}/order/${cartRes?.order.id}/confirmed`)
   }
 

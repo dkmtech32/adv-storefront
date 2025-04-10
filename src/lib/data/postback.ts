@@ -6,6 +6,7 @@ type PostbackData = {
   itemName: string
   quantity: number
   transactionId: string
+  status?: string
 }
 
 export async function postbackLog(data: PostbackData) {
