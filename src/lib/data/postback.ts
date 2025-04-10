@@ -1,5 +1,7 @@
 "use server"
 
+import { getPostbackApiUrl } from "@lib/config"
+
 type PostbackData = {
   clickId: string | null | undefined
   amount: number
@@ -14,7 +16,7 @@ export async function postbackLog(data: PostbackData) {
     console.log("Sending postback with data:", data)
 
     const response = await fetch(
-      "http://localhost:5272/api/affiliate-network/postbacks/log",
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/log`,
       {
         method: "POST",
         headers: {
@@ -41,7 +43,7 @@ export async function postbackLogUpdate(clickId: string, data: PostbackData) {
   try {
     console.log("Sending postback with data:", data)
     const response = await fetch(
-      `http://localhost:5272/api/affiliate-network/postbacks/log/${clickId}`,
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/log/${clickId}`,
       {
         method: "PUT",
         headers: {
@@ -68,7 +70,7 @@ export async function getPostbackLog(transactionId: string) {
   try {
     console.log("Fetching postback log for clickId:", transactionId)
     const response = await fetch(
-      `http://localhost:5272/api/affiliate-network/postbacks/log/${transactionId}/transaction`,
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/log/${transactionId}/transaction`,
       {
         method: "GET",
         headers: {
@@ -94,7 +96,7 @@ export async function postback(data: PostbackData) {
   try {
     console.log("Sending postback")
     const response = await fetch(
-      "http://localhost:5272/api/affiliate-network/postbacks",
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks`,
       {
         method: "POST",
         headers: {

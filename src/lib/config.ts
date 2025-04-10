@@ -7,6 +7,15 @@ if (process.env.MEDUSA_BACKEND_URL) {
   MEDUSA_BACKEND_URL = process.env.MEDUSA_BACKEND_URL
 }
 
+// Add this with your other environment variable declarations
+let POSTBACK_API_URL = "http://localhost:5272"
+
+if (process.env.POSTBACK_API_URL) {
+  POSTBACK_API_URL = process.env.POSTBACK_API_URL
+}
+
+export const getPostbackApiUrl = () => POSTBACK_API_URL
+
 export const sdk = new Medusa({
   baseUrl: MEDUSA_BACKEND_URL,
   debug: process.env.NODE_ENV === "development",
