@@ -183,7 +183,7 @@ export const listReturnShippingOptions = async () => {
       process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
   }
 
-  const cartId = "cart_01JSBX529DV38H1E0KA0XSANXW"
+  const cartId = process.env.NEXT_PUBLIC_CART_ID_EXAMPLE
 
   return axios
     .get<{ shipping_options: HttpTypes.StoreShippingOption[] }>(
