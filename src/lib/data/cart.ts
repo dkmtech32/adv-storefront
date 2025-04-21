@@ -566,7 +566,7 @@ export async function placeOrder(cartId?: string) {
             // Update the postback log with the order line item ID
             await postbackLogUpdate(existingPostback.clickId, {
               clickId: existingPostback.clickId,
-              amount: orderItem.unit_price / 100,
+              amount: orderItem.unit_price * orderItem.quantity,
               itemName:
                 orderItem.title || orderItem.variant?.title || "Unknown Item",
               quantity: orderItem.quantity,
@@ -581,7 +581,7 @@ export async function placeOrder(cartId?: string) {
             })
             await postback({
               clickId: existingPostback.clickId,
-              amount: orderItem.unit_price / 100,
+              amount: orderItem.unit_price * orderItem.quantity,
               itemName:
                 orderItem.title || orderItem.variant?.title || "Unknown Item",
               quantity: orderItem.quantity,
