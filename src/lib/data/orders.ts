@@ -182,7 +182,7 @@ export const listReturnShippingOptions = async () => {
     "x-publishable-api-key": process.env.MEDUSA_PUBLISHABLE_KEY || "",
   }
 
-  const cartId = process.env.NEXT_PUBLIC_CART_ID_EXAMPLE
+  const cartId = process.env.CART_ID_EXAMPLE
 
   return axios
     .get<{ shipping_options: HttpTypes.StoreShippingOption[] }>(
