@@ -8,7 +8,9 @@ import Items from "@modules/order/components/items"
 import OrderDetails from "@modules/order/components/order-details"
 import OrderSummary from "@modules/order/components/order-summary"
 import ShippingDetails from "@modules/order/components/shipping-details"
+import ReturnItems from "@modules/order/components/return-items"
 import React from "react"
+import { Divider } from "@medusajs/ui"
 
 type OrderDetailsTemplateProps = {
   order: HttpTypes.StoreOrder
@@ -37,6 +39,8 @@ const OrderDetailsTemplate: React.FC<OrderDetailsTemplateProps> = ({
         <Items order={order} />
         <ShippingDetails order={order} />
         <OrderSummary order={order} />
+        <Divider />
+        <ReturnItems order={order} />
         <Help />
       </div>
     </div>
