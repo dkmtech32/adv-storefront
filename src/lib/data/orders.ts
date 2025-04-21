@@ -179,12 +179,10 @@ export const listReturnReasons = async () => {
 export const listReturnShippingOptions = async () => {
   const headers = {
     ...(await getAuthHeaders()),
-    "x-publishable-api-key":
-      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+    "x-publishable-api-key": process.env.MEDUSA_PUBLISHABLE_KEY || "",
   }
 
-  // const cartId = process.env.NEXT_PUBLIC_CART_ID_EXAMPLE
-  const cartId = "cart_01JSC60ND0F4A025CAWPWYD2BJ"
+  const cartId = process.env.NEXT_PUBLIC_CART_ID_EXAMPLE
 
   return axios
     .get<{ shipping_options: HttpTypes.StoreShippingOption[] }>(
