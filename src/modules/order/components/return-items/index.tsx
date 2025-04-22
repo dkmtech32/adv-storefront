@@ -63,8 +63,8 @@ const ReturnItems = ({ order }: ReturnItemsProps) => {
           listReturnShippingOptions(),
         ])
 
-        console.log("reasons", reasons)
-        console.log("shipping", shipping)
+        // console.log("reasons", reasons)
+        // console.log("shipping", shipping)
 
         setReturnReasons(reasons || [])
         setShippingOptions(shipping || [])
@@ -152,6 +152,10 @@ const ReturnItems = ({ order }: ReturnItemsProps) => {
     }
 
     try {
+      console.log("order.id", order.id)
+      console.log("items", items)
+      console.log("shippingOption", shippingOption)
+      console.log("returnNote", returnNote)
       await createReturn(
         order.id,
         items,
