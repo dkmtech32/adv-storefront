@@ -11,6 +11,22 @@ type PostbackData = {
   status?: string
 }
 
+type PostbackResponse = {
+  isSuccess: boolean
+  message: string
+  value: {
+    id: number
+    clickId: string
+    offerId: number
+    transactionId: string
+    date: string
+    publisherCode: string
+    amount: number
+    status: number
+    offer: null | any // Can be typed more specifically if offer structure is known
+  }
+}
+
 export async function postbackLog(data: PostbackData) {
   try {
     console.log("Sending postback with data:", data)
@@ -120,10 +136,11 @@ export async function postbackReturn(itemId: string) {
     const postback = await getPostbackByItemId(itemId)
     if (postback) {
       console.log("Postback found:", postback)
+      console.log("Postback value:", postback.value)
       const response = await fetch(
         `${getPostbackApiUrl()}/api/affiliate-network/postbacks?id=${
-          postback.id
-        }&status=return`,
+          postback.value.id
+        }&status=Refunded`,
         {
           method: "PATCH",
           headers: {
@@ -143,16 +160,19 @@ export async function postbackReturn(itemId: string) {
   }
 }
 
-export async function getPostbackByItemId(itemId: string) {
+export async function getPostbackByItemId(
+  itemId: string
+): Promise<PostbackResponse | null> {
   try {
     console.log("Fetching postback by itemId:", itemId)
     const response = await fetch(
-      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/item/${itemId}`
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/${itemId}`
     )
-    const res = await response.json()
+    const res: PostbackResponse = await response.json()
     console.log("Postback response:", res)
     return res
   } catch (error) {
     console.error("Postback error:", error)
+    return null
   }
 }

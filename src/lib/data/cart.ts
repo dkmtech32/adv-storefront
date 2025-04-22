@@ -19,6 +19,7 @@ import {
   getPostbackLog,
   postbackLogUpdate,
   postback,
+  getPostbackByItemId,
 } from "./postback"
 
 /**
@@ -373,6 +374,9 @@ export async function initiatePaymentSession(
 export async function applyPromotions(codes: string[]) {
   const cartId = await getCartId()
 
+  const cart = await retrieveCart(cartId)
+  const lineItems = cart?.items || []
+  console.log("Line items:", lineItems)
   if (!cartId) {
     throw new Error("No existing cart found")
   }
@@ -589,7 +593,8 @@ export async function placeOrder(cartId?: string) {
                 orderItem.title || orderItem.variant?.title || "Unknown Item",
               quantity: orderItem.quantity,
               transactionId: orderItem.id,
-              status: "Success",
+              // status: "Success",
+              status: "Pending",
             })
           }
         } catch (error) {
