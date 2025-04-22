@@ -128,14 +128,42 @@ export const createReturn = async (
   receive_now?: boolean,
   location_id?: string
 ) => {
-  const headers = {
-    ...(await getAuthHeaders()),
-    "x-publishable-api-key":
-      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
-  }
+  try {
+    // Validate environment variables
+    if (!process.env.MEDUSA_BACKEND_URL) {
+      console.error("MEDUSA_BACKEND_URL is not defined")
+      throw new Error(
+        "Missing required environment variable: MEDUSA_BACKEND_URL"
+      )
+    }
 
-  return axios
-    .post<HttpTypes.StoreReturnResponse>(
+    if (!process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY) {
+      console.error("NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is not defined")
+      throw new Error(
+        "Missing required environment variable: NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY"
+      )
+    }
+
+    const headers = {
+      ...(await getAuthHeaders()),
+      "x-publishable-api-key":
+        process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "",
+    }
+
+    // Validate required parameters
+    if (!orderId) {
+      throw new Error("Order ID is required")
+    }
+
+    if (!items || !items.length) {
+      throw new Error("At least one item is required")
+    }
+
+    if (!return_shipping || !return_shipping.option_id) {
+      throw new Error("Return shipping option is required")
+    }
+
+    const response = await axios.post<HttpTypes.StoreReturnResponse>(
       `${process.env.MEDUSA_BACKEND_URL}/store/returns`,
       {
         order_id: orderId,
@@ -148,8 +176,12 @@ export const createReturn = async (
         headers,
       }
     )
-    .then((response) => response.data.return)
-    .catch((err) => medusaError(err))
+
+    return response.data.return
+  } catch (err) {
+    console.error("Error creating return:", err)
+    return medusaError(err)
+  }
 }
 
 export const listReturnReasons = async () => {
