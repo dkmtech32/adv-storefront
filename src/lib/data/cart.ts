@@ -126,7 +126,7 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
             // Update the postback log with new data
             await postbackLogUpdate(existingPostback.clickId, {
               clickId: existingPostback.clickId,
-              amount: item.unit_price / 100,
+              amount: item.unit_price * item.quantity - item.discount_total,
               itemName: item.title || item.variant?.title || "Unknown Item",
               quantity: item.quantity,
               transactionId: item.id,
@@ -213,7 +213,9 @@ export async function addToCart({
 
       await postbackLog({
         clickId,
-        amount: newLineItem.unit_price / 100, // Converting from cents to actual currency
+        amount:
+          newLineItem.unit_price * newLineItem.quantity -
+          newLineItem.discount_total, // Converting from cents to actual currency
         itemName:
           newLineItem.title || newLineItem.variant?.title || "Unknown Item",
         quantity: newLineItem.quantity,
@@ -283,7 +285,9 @@ export async function updateLineItem({
           // Update the postback log with new data
           await postbackLogUpdate(existingPostback.clickId, {
             clickId: existingPostback.clickId,
-            amount: updatedItem.unit_price / 100,
+            amount:
+              updatedItem.unit_price * updatedItem.quantity -
+              updatedItem.discount_total,
             itemName:
               updatedItem.title || updatedItem.variant?.title || "Unknown Item",
             quantity: updatedItem.quantity,
@@ -566,7 +570,9 @@ export async function placeOrder(cartId?: string) {
             // Update the postback log with the order line item ID
             await postbackLogUpdate(existingPostback.clickId, {
               clickId: existingPostback.clickId,
-              amount: orderItem.unit_price * orderItem.quantity,
+              amount:
+                orderItem.unit_price * orderItem.quantity -
+                orderItem.discount_total,
               itemName:
                 orderItem.title || orderItem.variant?.title || "Unknown Item",
               quantity: orderItem.quantity,
@@ -581,7 +587,9 @@ export async function placeOrder(cartId?: string) {
             })
             await postback({
               clickId: existingPostback.clickId,
-              amount: orderItem.unit_price * orderItem.quantity,
+              amount:
+                orderItem.unit_price * orderItem.quantity -
+                orderItem.discount_total,
               itemName:
                 orderItem.title || orderItem.variant?.title || "Unknown Item",
               quantity: orderItem.quantity,

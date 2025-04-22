@@ -113,3 +113,46 @@ export async function postback(data: PostbackData) {
     return null
   }
 }
+
+export async function postbackReturn(itemId: string) {
+  try {
+    console.log("Sending postback", itemId)
+    const postback = await getPostbackByItemId(itemId)
+    if (postback) {
+      console.log("Postback found:", postback)
+      const response = await fetch(
+        `${getPostbackApiUrl()}/api/affiliate-network/postbacks?id=${
+          postback.id
+        }&status=return`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      const res = await response.json()
+      console.log("Postback response:", res)
+      return res
+    } else {
+      console.log("No postback found")
+      return null
+    }
+  } catch (error) {
+    console.error("Postback error:", error)
+  }
+}
+
+export async function getPostbackByItemId(itemId: string) {
+  try {
+    console.log("Fetching postback by itemId:", itemId)
+    const response = await fetch(
+      `${getPostbackApiUrl()}/api/affiliate-network/postbacks/item/${itemId}`
+    )
+    const res = await response.json()
+    console.log("Postback response:", res)
+    return res
+  } catch (error) {
+    console.error("Postback error:", error)
+  }
+}

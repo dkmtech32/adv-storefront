@@ -5,6 +5,7 @@ import medusaError from "@lib/util/medusa-error"
 import { getAuthHeaders, getCacheOptions } from "./cookies"
 import { HttpTypes } from "@medusajs/types"
 import axios from "axios"
+import { postbackReturn } from "./postback"
 
 export const retrieveOrder = async (id: string) => {
   const headers = {
@@ -176,6 +177,11 @@ export const createReturn = async (
         headers,
       }
     )
+
+    // Update postback status to return
+    for (const item of items) {
+      await postbackReturn(item.id)
+    }
 
     return response.data.return
   } catch (err) {
